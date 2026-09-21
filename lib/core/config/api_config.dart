@@ -16,6 +16,6 @@ class ApiConfig {
   /// preset). Bus images are uploaded directly from the client to
   /// Cloudinary, exactly like the website does, and only the resulting
   /// secure URL is sent to the backend.
-  static const String cloudinaryCloudName = 'dwhuxdgw9';
+  static const String cloudinaryCloudName = 'diq1m0mss';
   static const String cloudinaryUploadPreset = 'qubitz';
 }
