@@ -2,7 +2,7 @@ name: bookmybus
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -35,6 +35,16 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # --- Backend integration (BookMyBus website backend) ---
+  # Firebase Auth is how the backend (server/middlewares/firebaseAuth.js)
+  # identifies the signed-in bus owner, exactly like the React website.
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.3
+  # Plain REST calls to https://bookmybus-qubitz-demo.onrender.com/api
+  http: ^1.2.2
+  # Small, dependency-free state holder (AppSession) shared across screens.
+  provider: ^6.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -51,7 +61,6 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

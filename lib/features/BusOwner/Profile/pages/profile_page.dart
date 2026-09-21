@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
+import '../../../../core/session/app_session.dart';
 import '../../../../shared/widgets/common_app_bar.dart';
+import '../../../auth/data/auth_repository.dart';
 import '../widgets/company_admin_info_card.dart';
 import '../widgets/company_editable_info_card.dart';
 import '../widgets/company_address_card.dart';
@@ -85,20 +88,62 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  Future<void> _signOut() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sign out'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    await AuthRepository().signOut();
+    if (!mounted) return;
+    // Clearing AppSession + Firebase's own signed-out state makes AuthGate
+    // (lib/app/auth_gate.dart) rebuild back into LoginPage automatically.
+    context.read<AppSession>().clear();
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final company = context.watch<AppSession>().company;
+
     return Scaffold(
-      appBar: const CommonAppBar(title: 'Profile'),
+      appBar: CommonAppBar(
+        title: 'Profile',
+        actions: [
+          IconButton(
+            tooltip: 'Sign out',
+            icon: const Icon(Icons.logout, color: AppColors.textSecondary),
+            onPressed: _signOut,
+          ),
+        ],
+      ),
       backgroundColor: AppColors.scaffold,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Company Admin Info Card
+            // Company Admin Info Card — wired to the real signed-in
+            // company. Registration number / approval status aren't part
+            // of GET /api/companies/me yet, so those two stay illustrative
+            // until the backend response includes them.
             CompanyAdminInfoCard(
-              companyName: 'MyBus Transport Ltd.',
-              companyEmail: 'admin@mybustransport.com',
+              companyName: company?.companyName ?? '—',
+              companyEmail: company?.email ?? '—',
               registrationNumber: 'REG-2023-12345',
               approvalStatus: 'Approved',
             ),

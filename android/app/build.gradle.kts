@@ -2,6 +2,9 @@ plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Applies android/app/google-services.json so Firebase Auth works.
+    // Requires that file to be added — see BACKEND_INTEGRATION.md.
+    id("com.google.gms.google-services")
 }
 
 android {

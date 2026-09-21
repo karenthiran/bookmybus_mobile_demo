@@ -4,7 +4,14 @@ import 'package:bookmybus/app/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
 class CompanyDetailsCard extends StatelessWidget {
-  const CompanyDetailsCard({super.key});
+  const CompanyDetailsCard({
+    super.key,
+    required this.companyName,
+    required this.companyEmail,
+  });
+
+  final String companyName;
+  final String companyEmail;
 
   @override
   Widget build(BuildContext context) {
@@ -50,11 +57,11 @@ class CompanyDetailsCard extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               children: [
-                const _ReadOnlyField(label: 'Company', value: 'bus1'),
+                _ReadOnlyField(label: 'Company', value: companyName),
                 const SizedBox(height: AppSpacing.md),
-                const _ReadOnlyField(
+                _ReadOnlyField(
                   label: 'Company Email',
-                  value: 'karank001@gmail.com',
+                  value: companyEmail,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text(

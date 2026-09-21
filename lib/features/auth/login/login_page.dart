@@ -3,7 +3,11 @@ import 'package:bookmybus/app/theme/app_radius.dart';
 import 'package:bookmybus/app/theme/app_shadows.dart';
 import 'package:bookmybus/app/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../../core/network/api_exception.dart';
+import '../../../core/session/app_session.dart';
+import '../data/auth_repository.dart';
 import '../forgot_password/forgot_password_page.dart';
 import 'widgets/auth_form_field.dart';
 
@@ -17,8 +21,11 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _authRepository = AuthRepository();
   bool _obscurePassword = true;
   bool _submitted = false;
+  bool _isSubmitting = false;
+  String? _serverError;
 
   @override
   void initState() {
@@ -54,11 +61,34 @@ class _LoginPageState extends State<LoginPage> {
 
   bool get _isValid => _emailError == null && _passwordError == null;
 
-  void _onSubmit() {
-    setState(() => _submitted = true);
+  Future<void> _onSubmit() async {
+    setState(() {
+      _submitted = true;
+      _serverError = null;
+    });
     if (!_isValid) return;
 
-    // TODO: ADD BACKEND CODE HERE
+    setState(() => _isSubmitting = true);
+    try {
+      final company = await _authRepository.signIn(
+        email: _email.text,
+        password: _password.text,
+      );
+      if (!mounted) return;
+      // Store the profile so AuthGate can show the dashboard immediately
+      // instead of re-fetching it. AuthGate's StreamBuilder will then
+      // rebuild into OperatorDashboardScreen on its own — no navigation
+      // call needed here.
+      context.read<AppSession>().setCompany(company);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _serverError = e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _serverError = 'Login failed. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -136,11 +166,43 @@ class _LoginPageState extends State<LoginPage> {
 
                       // Password requirements
                       _PasswordRequirements(password: _password.text),
-                      const SizedBox(height: AppSpacing.xl),
+                      const SizedBox(height: AppSpacing.lg),
+
+                      // Server-side / auth error (wrong password, no
+                      // company for this account, network error, etc.)
+                      if (_serverError != null) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          decoration: BoxDecoration(
+                            color: AppColors.error.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            border: Border.all(
+                              color: AppColors.error.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.error_outline,
+                                  size: 18, color: AppColors.error),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Text(
+                                  _serverError!,
+                                  style: tt.bodySmall
+                                      ?.copyWith(color: AppColors.error),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                      ],
 
                       // Submit button
                       FilledButton(
-                        onPressed: _onSubmit,
+                        onPressed: _isSubmitting ? null : _onSubmit,
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           padding: const EdgeInsets.symmetric(
@@ -149,13 +211,23 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                         ),
-                        child: const Text(
-                          'Start Journey',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation(
+                                      AppColors.white),
+                                ),
+                              )
+                            : const Text(
+                                'Start Journey',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
